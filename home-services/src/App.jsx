@@ -15,6 +15,9 @@ import CustomerRoutes from './routes/CustomerRoutes';
 import ProviderRoutes from './routes/ProviderRoutes';
 import AdminRoutes from './routes/AdminRoutes';
 
+// Admin Layout
+import AdminLayout from './components/admin/AdminLayout';
+
 // Dashboard and Service pages
 import CustomerDashboard from './pages/customer/Dashboard';
 
@@ -71,7 +74,7 @@ const AppRoutes = () => {
       />
       <Route
         path="/admin/*"
-        element={user?.role === 'admin' ? <AdminRoutes /> : <Navigate to="/login" />}
+        element={user?.role === 'admin' ? <AdminLayout><AdminRoutes /></AdminLayout> : <Navigate to="/login" />}
       />
 
       {/* Default route */}
