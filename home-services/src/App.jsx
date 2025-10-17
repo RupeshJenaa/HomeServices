@@ -1,8 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Header from './components/Header';
-import Footer from './components/Footer';
 import Loader from './components/Loader';
 import './App.css';
 // Auth pages
@@ -102,7 +100,6 @@ function App() {
         <div className="min-h-screen bg-gray-50">
           <main className="min-h-screen">
             <AppRoutes />
-            <Header/>
           </main>
         </div>
       </AuthProvider>

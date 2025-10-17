@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Header = () => {
+const FooterHeader = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
 
@@ -86,4 +86,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default FooterHeader;
