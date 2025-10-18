@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../../api/adminAPI';
+// Removed adminAPI import since we're using dummy data
 import {
   BarChart,
   Bar,
@@ -13,41 +13,57 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import '../../components/admin/AdminLayout.css'; // Corrected import path
 
 const ReportsAnalytics = () => {
   const [reports, setReports] = useState({
-    usersByRole: [],
-    totalServices: 0,
-    bookingStats: [],
-    revenueOverTime: []
+    usersByRole: [
+      { _id: 'customer', count: 1242 },
+      { _id: 'provider', count: 87 },
+      { _id: 'admin', count: 3 }
+    ],
+    totalServices: 15,
+    bookingStats: [
+      { _id: 'pending', count: 24, totalRevenue: 1250.75 },
+      { _id: 'accepted', count: 42, totalRevenue: 3120.50 },
+      { _id: 'completed', count: 290, totalRevenue: 28750.25 },
+      { _id: 'cancelled', count: 15, totalRevenue: 0 },
+      { _id: 'rejected', count: 5, totalRevenue: 0 }
+    ],
+    revenueOverTime: [
+      { _id: '2023-06-01', dailyRevenue: 1250.75, bookingsCount: 12 },
+      { _id: '2023-06-02', dailyRevenue: 980.50, bookingsCount: 8 },
+      { _id: '2023-06-03', dailyRevenue: 1750.25, bookingsCount: 15 },
+      { _id: '2023-06-04', dailyRevenue: 2100.00, bookingsCount: 18 },
+      { _id: '2023-06-05', dailyRevenue: 1850.75, bookingsCount: 16 },
+      { _id: '2023-06-06', dailyRevenue: 2300.50, bookingsCount: 20 },
+      { _id: '2023-06-07', dailyRevenue: 1950.25, bookingsCount: 17 }
+    ]
   });
-  const [loading, setLoading] = useState(true);
+  
+  const [loading, setLoading] = useState(false); // Remove loading simulation
   const [period, setPeriod] = useState('month');
-  const [revenueData, setRevenueData] = useState([]);
+  const [revenueData, setRevenueData] = useState([
+    { date: '2023-06-01', revenue: 1250.75, bookings: 12 },
+    { date: '2023-06-02', revenue: 980.50, bookings: 8 },
+    { date: '2023-06-03', revenue: 1750.25, bookings: 15 },
+    { date: '2023-06-04', revenue: 2100.00, bookings: 18 },
+    { date: '2023-06-05', revenue: 1850.75, bookings: 16 },
+    { date: '2023-06-06', revenue: 2300.50, bookings: 20 },
+    { date: '2023-06-07', revenue: 1950.25, bookings: 17 }
+  ]);
 
-  useEffect(() => {
-    fetchReports();
-  }, [period]);
+  // Remove the useEffect that simulates API calls
+  // useEffect(() => {
+  //   const fetchReports = async () => {
+  //     setLoading(true);
+  //     // Simulate API delay
+  //     await new Promise(resolve => setTimeout(resolve, 1000));
+  //     setLoading(false);
+  //   };
 
-  const fetchReports = async () => {
-    try {
-      setLoading(true);
-      const response = await adminAPI.getReports({ period });
-      setReports(response.data);
-      
-      // Format revenue data for chart
-      const formattedRevenueData = response.data.revenueOverTime.map(item => ({
-        date: item._id,
-        revenue: item.dailyRevenue,
-        bookings: item.bookingsCount
-      }));
-      setRevenueData(formattedRevenueData);
-    } catch (error) {
-      console.error('Error fetching reports:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   fetchReports();
+  // }, [period]);
 
   // Format user data for pie chart
   const userData = reports.usersByRole.map(item => ({
@@ -64,23 +80,24 @@ const ReportsAnalytics = () => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Reports & Analytics</h1>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      </div>
-    );
-  }
+  // Remove the loading check
+  // if (loading) {
+  //   return (
+  //     <div className="admin-page">
+  //       <h1 className="dashboard-title">Reports & Analytics</h1>
+  //       <div className="loading-container">
+  //         <div className="spinner"></div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Reports & Analytics</h1>
+    <div className="admin-page">
+      <h1 className="dashboard-title">Reports & Analytics</h1>
       
       {/* Period Selector */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
+      <div className="admin-filters">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-800">Analytics Overview</h2>
           <div className="flex space-x-2">
@@ -88,9 +105,10 @@ const ReportsAnalytics = () => {
               onClick={() => setPeriod('week')}
               className={`px-4 py-2 rounded-md text-sm font-medium ${
                 period === 'week'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'quick-action-button btn-blue'
+                  : 'quick-action-button'
               }`}
+              style={{margin: '0'}}
             >
               Week
             </button>
@@ -98,9 +116,10 @@ const ReportsAnalytics = () => {
               onClick={() => setPeriod('month')}
               className={`px-4 py-2 rounded-md text-sm font-medium ${
                 period === 'month'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'quick-action-button btn-blue'
+                  : 'quick-action-button'
               }`}
+              style={{margin: '0'}}
             >
               Month
             </button>
@@ -108,9 +127,10 @@ const ReportsAnalytics = () => {
               onClick={() => setPeriod('year')}
               className={`px-4 py-2 rounded-md text-sm font-medium ${
                 period === 'year'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'quick-action-button btn-blue'
+                  : 'quick-action-button'
               }`}
+              style={{margin: '0'}}
             >
               Year
             </button>
@@ -119,61 +139,67 @@ const ReportsAnalytics = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex items-center">
-            <div className="rounded-full bg-blue-100 p-3">
-              <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
-              <p className="text-2xl font-semibold text-gray-900">
-                {reports.usersByRole.reduce((sum, role) => sum + role.count, 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex items-center">
-            <div className="rounded-full bg-green-100 p-3">
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium text-gray-900">Total Services</h3>
-              <p className="text-2xl font-semibold text-gray-900">{reports.totalServices}</p>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-card-content">
+            <div className="stat-card-header">
+              <div className="stat-card-icon bg-blue-500">
+                <svg className="stat-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div className="stat-card-info">
+                <div className="stat-card-title">Total Users</div>
+                <div className="stat-card-value">
+                  {reports.usersByRole.reduce((sum, role) => sum + role.count, 0)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex items-center">
-            <div className="rounded-full bg-purple-100 p-3">
-              <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        <div className="stat-card">
+          <div className="stat-card-content">
+            <div className="stat-card-header">
+              <div className="stat-card-icon bg-green-500">
+                <svg className="stat-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              </div>
+              <div className="stat-card-info">
+                <div className="stat-card-title">Total Services</div>
+                <div className="stat-card-value">{reports.totalServices}</div>
+              </div>
             </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium text-gray-900">Total Revenue</h3>
-              <p className="text-2xl font-semibold text-gray-900">
-                ${reports.bookingStats.reduce((sum, stat) => sum + stat.totalRevenue, 0).toFixed(2)}
-              </p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-content">
+            <div className="stat-card-header">
+              <div className="stat-card-icon bg-purple-500">
+                <svg className="stat-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="stat-card-info">
+                <div className="stat-card-title">Total Revenue</div>
+                <div className="stat-card-value">
+                  ${reports.bookingStats.reduce((sum, stat) => sum + stat.totalRevenue, 0).toFixed(2)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="charts-section">
         {/* User Distribution Pie Chart */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">User Distribution</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+        <div className="chart-card">
+          <h3 className="chart-title">User Distribution</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
                   data={userData}
@@ -197,10 +223,10 @@ const ReportsAnalytics = () => {
         </div>
 
         {/* Booking Status Bar Chart */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Booking Status Distribution</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+        <div className="chart-card">
+          <h3 className="chart-title">Booking Status Distribution</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={bookingData}
                 margin={{
@@ -224,10 +250,10 @@ const ReportsAnalytics = () => {
       </div>
 
       {/* Revenue Over Time */}
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Revenue Over Time</h3>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
+      <div className="chart-card">
+        <h3 className="chart-title">Revenue Over Time</h3>
+        <div className="chart-container">
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart
               data={revenueData}
               margin={{

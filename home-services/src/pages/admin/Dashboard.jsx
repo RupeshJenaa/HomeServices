@@ -1,53 +1,138 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../../api/adminAPI';
 import './Dashboard.css';
+import '../../components/admin/AdminLayout.css'; // Import admin layout styles for consistency
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalProviders: 0,
-    totalBookings: 0,
-    pendingApprovals: 0,
+    totalUsers: 1242,
+    totalProviders: 87,
+    totalBookings: 356,
+    pendingApprovals: 12,
   });
-  const [loading, setLoading] = useState(true);
+  
+  const [recentBookings, setRecentBookings] = useState([
+    {
+      id: 'BK001',
+      customer: 'John Smith',
+      provider: 'Mike Johnson',
+      service: 'Plumbing Repair',
+      amount: 120.00,
+      status: 'completed',
+      date: '2023-06-15'
+    },
+    {
+      id: 'BK002',
+      customer: 'Sarah Williams',
+      provider: 'Anna Davis',
+      service: 'Electrical Work',
+      amount: 85.50,
+      status: 'pending',
+      date: '2023-06-14'
+    },
+    {
+      id: 'BK003',
+      customer: 'Robert Brown',
+      provider: 'David Wilson',
+      service: 'AC Service',
+      amount: 200.00,
+      status: 'accepted',
+      date: '2023-06-14'
+    },
+    {
+      id: 'BK004',
+      customer: 'Emily Davis',
+      provider: 'James Miller',
+      service: 'Cleaning Service',
+      amount: 95.75,
+      status: 'completed',
+      date: '2023-06-13'
+    },
+    {
+      id: 'BK005',
+      customer: 'Michael Wilson',
+      provider: 'Lisa Taylor',
+      service: 'Painting',
+      amount: 350.00,
+      status: 'cancelled',
+      date: '2023-06-12'
+    }
+  ]);
+  
+  const [recentUsers, setRecentUsers] = useState([
+    {
+      id: 1,
+      name: 'John Smith',
+      email: 'john.smith@example.com',
+      role: 'customer',
+      joinDate: '2023-06-10',
+      status: 'active'
+    },
+    {
+      id: 2,
+      name: 'Anna Davis',
+      email: 'anna.davis@example.com',
+      role: 'provider',
+      joinDate: '2023-06-08',
+      status: 'active'
+    },
+    {
+      id: 3,
+      name: 'Robert Brown',
+      email: 'robert.brown@example.com',
+      role: 'customer',
+      joinDate: '2023-06-05',
+      status: 'active'
+    },
+    {
+      id: 4,
+      name: 'Lisa Taylor',
+      email: 'lisa.taylor@example.com',
+      role: 'provider',
+      joinDate: '2023-06-01',
+      status: 'pending'
+    }
+  ]);
+  
+  const [loading, setLoading] = useState(false); // Remove loading simulation
 
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+  // Remove the useEffect that simulates API calls
+  // useEffect(() => {
+  //   const fetchDashboardStats = async () => {
+  //     setLoading(true);
+  //     // Simulate API delay
+  //     await new Promise(resolve => setTimeout(resolve, 1000));
+  //     setLoading(false);
+  //   };
 
-  const fetchDashboardStats = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch users
-      const usersResponse = await adminAPI.getUsers();
-      const providersResponse = await adminAPI.getProviders();
-      const bookingsResponse = await adminAPI.getBookings();
-      const pendingProvidersResponse = await adminAPI.getProviders({ approved: false });
+  //   fetchDashboardStats();
+  // }, []);
 
-      setStats({
-        totalUsers: usersResponse.data.length || 0,
-        totalProviders: providersResponse.data.length || 0,
-        totalBookings: bookingsResponse.data.length || 0,
-        pendingApprovals: pendingProvidersResponse.data.length || 0,
-      });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-    } finally {
-      setLoading(false);
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'status-badge pending';
+      case 'accepted':
+        return 'status-badge active';
+      case 'completed':
+        return 'status-badge active';
+      case 'cancelled':
+        return 'status-badge inactive';
+      default:
+        return 'status-badge default';
     }
   };
 
-  if (loading) {
-    return (
-      <div className="admin-dashboard">
-        <h1 className="dashboard-title">Admin Dashboard</h1>
-        <div className="loading-container">
-          <div className="spinner"></div>
-        </div>
-      </div>
-    );
-  }
+  // Remove the loading check
+  // if (loading) {
+  //   return (
+  //     <div className="admin-dashboard">
+  //       <h1 className="dashboard-title">Admin Dashboard</h1>
+  //       <div className="loading-container">
+  //         <div className="spinner"></div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="admin-dashboard">
@@ -147,10 +232,89 @@ const AdminDashboard = () => {
 
       {/* Recent Activity */}
       <div className="recent-activity">
-        <h2 className="recent-activity-title">Recent Activity</h2>
-        <div className="recent-activity-content">
-          <div className="recent-activity-empty">
-            <p>Recent activity will appear here</p>
+        <h2 className="recent-activity-title">Recent Bookings</h2>
+        <div className="admin-table-container">
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Customer</th>
+                  <th>Provider</th>
+                  <th>Service</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentBookings.map((booking) => (
+                  <tr key={booking.id}>
+                    <td>{booking.id}</td>
+                    <td>{booking.customer}</td>
+                    <td>{booking.provider}</td>
+                    <td>{booking.service}</td>
+                    <td>${booking.amount.toFixed(2)}</td>
+                    <td>
+                      <span className={getStatusBadgeClass(booking.status)}>
+                        {booking.status}
+                      </span>
+                    </td>
+                    <td>{booking.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Users */}
+      <div className="recent-activity">
+        <h2 className="recent-activity-title">Recent Users</h2>
+        <div className="admin-table-container">
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Join Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <div className="user-info">
+                        <div className="user-avatar-small">
+                          <div className="avatar-small">
+                            {user.name.charAt(0)}
+                          </div>
+                        </div>
+                        <div className="user-name">
+                          {user.name}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{user.email}</td>
+                    <td>
+                      <span className={`role-badge ${user.role}`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td>{user.joinDate}</td>
+                    <td>
+                      <span className={`status-badge ${user.status === 'active' ? 'active' : 'pending'}`}>
+                        {user.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

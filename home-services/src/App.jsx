@@ -30,6 +30,10 @@ import PestControlServices from './pages/services/PestControlServices';
 import ApplianceRepairServices from './pages/services/ApplianceRepairServices';
 import AllServices from './pages/services/AllServices';
 
+// Test components
+import TestAdminDashboard from './TestAdminDashboard';
+import TestDataDisplay from './TestDataDisplay';
+
 const AppRoutes = () => {
   const { user, loading } = useAuth();
 
@@ -60,6 +64,10 @@ const AppRoutes = () => {
       <Route path="/services/carpentry" element={<CarpentryServices />} />
       <Route path="/services/pest-control" element={<PestControlServices />} />
       <Route path="/services/appliance-repair" element={<ApplianceRepairServices />} />
+
+      {/* Test routes */}
+      <Route path="/test-admin" element={<TestAdminDashboard />} />
+      <Route path="/test-data" element={<TestDataDisplay />} />
 
       {/* Protected routes */}
       <Route
@@ -97,8 +105,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
-          <main className="min-h-screen">
+        <div className="app-container">
+          <main className="main-content">
             <AppRoutes />
           </main>
         </div>
