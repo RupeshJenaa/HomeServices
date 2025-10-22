@@ -1,92 +1,56 @@
 import React, { useState, useEffect } from 'react';
+import { adminAPI } from '../../api/adminAPI';
 import '../../components/admin/AdminLayout.css'; // Corrected import path
 
 const UsersManagement = () => {
-  const [users, setUsers] = useState([
-    {
-      _id: '1',
-      name: 'John Smith',
-      email: 'john.smith@example.com',
-      phone: '+1 (555) 123-4567',
-      role: 'customer',
-      isActive: true,
-      createdAt: '2023-01-15T10:30:00Z'
-    },
-    {
-      _id: '2',
-      name: 'Anna Davis',
-      email: 'anna.davis@example.com',
-      phone: '+1 (555) 987-6543',
-      role: 'provider',
-      isActive: true,
-      createdAt: '2023-02-20T14:45:00Z'
-    },
-    {
-      _id: '3',
-      name: 'Robert Brown',
-      email: 'robert.brown@example.com',
-      phone: '+1 (555) 456-7890',
-      role: 'customer',
-      isActive: false,
-      createdAt: '2023-03-10T09:15:00Z'
-    },
-    {
-      _id: '4',
-      name: 'Lisa Taylor',
-      email: 'lisa.taylor@example.com',
-      phone: '+1 (555) 234-5678',
-      role: 'provider',
-      isActive: true,
-      createdAt: '2023-04-05T16:20:00Z'
-    },
-    {
-      _id: '5',
-      name: 'Michael Wilson',
-      email: 'michael.wilson@example.com',
-      phone: '+1 (555) 876-5432',
-      role: 'customer',
-      isActive: true,
-      createdAt: '2023-05-12T11:30:00Z'
-    },
-    {
-      _id: '6',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@example.com',
-      phone: '+1 (555) 345-6789',
-      role: 'admin',
-      isActive: true,
-      createdAt: '2023-01-01T08:00:00Z'
-    }
-  ]);
-  
-  const [loading, setLoading] = useState(false); // Remove loading simulation
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Remove the useEffect that simulates API calls
-  // useEffect(() => {
-  //   const fetchUsers = async () => {
-  //     setLoading(true);
-  //     // Simulate API delay
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
-  //     setLoading(false);
-  //   };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await adminAPI.getUsers({
+          page: currentPage,
+          limit: 10,
+          search: searchTerm,
+          role: roleFilter
+        });
+        
+        setUsers(response.data || []);
+        setTotalPages(response.totalPages || 1);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError('Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   fetchUsers();
-  // }, [currentPage, roleFilter]);
+    fetchUsers();
+  }, [currentPage, searchTerm, roleFilter]);
 
   const handleStatusChange = async (userId, currentStatus) => {
-    // Update user status in the local state
-    setUsers(users.map(user => 
-      user._id === userId ? {...user, isActive: !currentStatus} : user
-    ));
+    try {
+      await adminAPI.updateUserStatus(userId, !currentStatus);
+      // Update user status in the local state
+      setUsers(users.map(user => 
+        user._id === userId ? {...user, isActive: !currentStatus} : user
+      ));
+    } catch (err) {
+      console.error('Error updating user status:', err);
+      setError('Failed to update user status');
+    }
   };
 
   const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   ).filter(user => 
     roleFilter ? user.role === roleFilter : true
   );
@@ -97,17 +61,28 @@ const UsersManagement = () => {
     }
   };
 
-  // Remove the loading check
-  // if (loading) {
-  //   return (
-  //     <div className="admin-page">
-  //       <h1 className="dashboard-title">Users Management</h1>
-  //       <div className="loading-container">
-  //         <div className="spinner"></div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <h1 className="dashboard-title">Users Management</h1>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading users...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-page">
+        <h1 className="dashboard-title">Users Management</h1>
+        <div className="error-container">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page">
@@ -181,21 +156,21 @@ const UsersManagement = () => {
                     <div className="user-info">
                       <div className="user-avatar-small">
                         <div className="avatar-small">
-                          {user.name.charAt(0).toUpperCase()}
+                          {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                       </div>
                       <div className="user-name">
-                        {user.name}
+                        {user.name || 'Unknown'}
                       </div>
                     </div>
                   </td>
                   <td>
-                    <span className={`role-badge ${user.role}`}>
-                      {user.role}
+                    <span className={`role-badge ${user.role || 'customer'}`}>
+                      {user.role || 'customer'}
                     </span>
                   </td>
                   <td>
-                    {user.email}
+                    {user.email || 'N/A'}
                   </td>
                   <td>
                     {user.phone || 'N/A'}
@@ -206,7 +181,7 @@ const UsersManagement = () => {
                     </span>
                   </td>
                   <td>
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                   </td>
                   <td>
                     <button

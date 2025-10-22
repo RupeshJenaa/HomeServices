@@ -1,111 +1,65 @@
 import React, { useState, useEffect } from 'react';
+import { adminAPI } from '../../api/adminAPI';
 import './Dashboard.css';
 import '../../components/admin/AdminLayout.css'; // Import admin layout styles for consistency
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
-    totalUsers: 1242,
-    totalProviders: 87,
-    totalBookings: 356,
-    pendingApprovals: 12,
+    totalUsers: 0,
+    totalProviders: 0,
+    totalBookings: 0,
+    pendingApprovals: 0,
   });
   
-  const [recentBookings, setRecentBookings] = useState([
-    {
-      id: 'BK001',
-      customer: 'John Smith',
-      provider: 'Mike Johnson',
-      service: 'Plumbing Repair',
-      amount: 120.00,
-      status: 'completed',
-      date: '2023-06-15'
-    },
-    {
-      id: 'BK002',
-      customer: 'Sarah Williams',
-      provider: 'Anna Davis',
-      service: 'Electrical Work',
-      amount: 85.50,
-      status: 'pending',
-      date: '2023-06-14'
-    },
-    {
-      id: 'BK003',
-      customer: 'Robert Brown',
-      provider: 'David Wilson',
-      service: 'AC Service',
-      amount: 200.00,
-      status: 'accepted',
-      date: '2023-06-14'
-    },
-    {
-      id: 'BK004',
-      customer: 'Emily Davis',
-      provider: 'James Miller',
-      service: 'Cleaning Service',
-      amount: 95.75,
-      status: 'completed',
-      date: '2023-06-13'
-    },
-    {
-      id: 'BK005',
-      customer: 'Michael Wilson',
-      provider: 'Lisa Taylor',
-      service: 'Painting',
-      amount: 350.00,
-      status: 'cancelled',
-      date: '2023-06-12'
-    }
-  ]);
-  
-  const [recentUsers, setRecentUsers] = useState([
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@example.com',
-      role: 'customer',
-      joinDate: '2023-06-10',
-      status: 'active'
-    },
-    {
-      id: 2,
-      name: 'Anna Davis',
-      email: 'anna.davis@example.com',
-      role: 'provider',
-      joinDate: '2023-06-08',
-      status: 'active'
-    },
-    {
-      id: 3,
-      name: 'Robert Brown',
-      email: 'robert.brown@example.com',
-      role: 'customer',
-      joinDate: '2023-06-05',
-      status: 'active'
-    },
-    {
-      id: 4,
-      name: 'Lisa Taylor',
-      email: 'lisa.taylor@example.com',
-      role: 'provider',
-      joinDate: '2023-06-01',
-      status: 'pending'
-    }
-  ]);
-  
-  const [loading, setLoading] = useState(false); // Remove loading simulation
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [recentUsers, setRecentUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Remove the useEffect that simulates API calls
-  // useEffect(() => {
-  //   const fetchDashboardStats = async () => {
-  //     setLoading(true);
-  //     // Simulate API delay
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
-  //     setLoading(false);
-  //   };
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // In a real implementation, you would have an API endpoint for dashboard stats
+        // For now, we'll fetch individual data and calculate stats
+        
+        // Fetch users, providers, and bookings
+        const usersResponse = await adminAPI.getUsers();
+        const providersResponse = await adminAPI.getProviders();
+        const bookingsResponse = await adminAPI.getBookings();
+        
+        // Calculate stats
+        const totalUsers = usersResponse.data?.length || 0;
+        const totalProviders = providersResponse.data?.length || 0;
+        const totalBookings = bookingsResponse.data?.length || 0;
+        
+        // Filter pending approvals (this is a simplified example)
+        const pendingApprovals = providersResponse.data?.filter(provider => 
+          provider.status === 'pending'
+        ).length || 0;
+        
+        setStats({
+          totalUsers,
+          totalProviders,
+          totalBookings,
+          pendingApprovals
+        });
+        
+        // Set recent bookings (limit to 5)
+        setRecentBookings(bookingsResponse.data?.slice(0, 5) || []);
+        
+        // Set recent users (limit to 4)
+        setRecentUsers(usersResponse.data?.slice(0, 4) || []);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   fetchDashboardStats();
-  // }, []);
+    fetchDashboardData();
+  }, []);
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -122,17 +76,28 @@ const AdminDashboard = () => {
     }
   };
 
-  // Remove the loading check
-  // if (loading) {
-  //   return (
-  //     <div className="admin-dashboard">
-  //       <h1 className="dashboard-title">Admin Dashboard</h1>
-  //       <div className="loading-container">
-  //         <div className="spinner"></div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="admin-dashboard">
+        <h1 className="dashboard-title">Admin Dashboard</h1>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-dashboard">
+        <h1 className="dashboard-title">Admin Dashboard</h1>
+        <div className="error-container">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-dashboard">
@@ -249,18 +214,18 @@ const AdminDashboard = () => {
               </thead>
               <tbody>
                 {recentBookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>{booking.id}</td>
-                    <td>{booking.customer}</td>
-                    <td>{booking.provider}</td>
-                    <td>{booking.service}</td>
-                    <td>${booking.amount.toFixed(2)}</td>
+                  <tr key={booking._id}>
+                    <td>{booking._id}</td>
+                    <td>{booking.customer?.name || 'N/A'}</td>
+                    <td>{booking.provider?.name || 'N/A'}</td>
+                    <td>{booking.service?.name || 'N/A'}</td>
+                    <td>${booking.totalAmount?.toFixed(2) || '0.00'}</td>
                     <td>
                       <span className={getStatusBadgeClass(booking.status)}>
                         {booking.status}
                       </span>
                     </td>
-                    <td>{booking.date}</td>
+                    <td>{new Date(booking.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -286,29 +251,29 @@ const AdminDashboard = () => {
               </thead>
               <tbody>
                 {recentUsers.map((user) => (
-                  <tr key={user.id}>
+                  <tr key={user._id}>
                     <td>
                       <div className="user-info">
                         <div className="user-avatar-small">
                           <div className="avatar-small">
-                            {user.name.charAt(0)}
+                            {user.name?.charAt(0) || 'U'}
                           </div>
                         </div>
                         <div className="user-name">
-                          {user.name}
+                          {user.name || 'Unknown'}
                         </div>
                       </div>
                     </td>
-                    <td>{user.email}</td>
+                    <td>{user.email || 'N/A'}</td>
                     <td>
-                      <span className={`role-badge ${user.role}`}>
-                        {user.role}
+                      <span className={`role-badge ${user.role || 'customer'}`}>
+                        {user.role || 'customer'}
                       </span>
                     </td>
-                    <td>{user.joinDate}</td>
+                    <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</td>
                     <td>
-                      <span className={`status-badge ${user.status === 'active' ? 'active' : 'pending'}`}>
-                        {user.status}
+                      <span className={`status-badge ${user.isActive ? 'active' : 'pending'}`}>
+                        {user.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                   </tr>

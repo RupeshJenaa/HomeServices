@@ -1,110 +1,58 @@
 import React, { useState, useEffect } from 'react';
+import { adminAPI } from '../../api/adminAPI';
 import '../../components/admin/AdminLayout.css'; // Corrected import path
 
 const ProvidersManagement = () => {
-  const [providers, setProviders] = useState([
-    {
-      _id: '1',
-      name: 'Anna Davis',
-      email: 'anna.davis@example.com',
-      phone: '+1 (555) 987-6543',
-      providerInfo: {
-        isApproved: true,
-        services: [
-          { name: 'Plumbing Repair' },
-          { name: 'Pipe Installation' }
-        ]
-      },
-      createdAt: '2023-02-20T14:45:00Z'
-    },
-    {
-      _id: '2',
-      name: 'Lisa Taylor',
-      email: 'lisa.taylor@example.com',
-      phone: '+1 (555) 234-5678',
-      providerInfo: {
-        isApproved: true,
-        services: [
-          { name: 'Electrical Work' },
-          { name: 'Lighting Installation' }
-        ]
-      },
-      createdAt: '2023-04-05T16:20:00Z'
-    },
-    {
-      _id: '3',
-      name: 'James Miller',
-      email: 'james.miller@example.com',
-      phone: '+1 (555) 567-8901',
-      providerInfo: {
-        isApproved: false,
-        services: [
-          { name: 'AC Service' },
-          { name: 'Heating Repair' }
-        ]
-      },
-      createdAt: '2023-05-18T10:30:00Z'
-    },
-    {
-      _id: '4',
-      name: 'David Wilson',
-      email: 'david.wilson@example.com',
-      phone: '+1 (555) 345-6789',
-      providerInfo: {
-        isApproved: true,
-        services: [
-          { name: 'Cleaning Service' },
-          { name: 'Carpet Cleaning' }
-        ]
-      },
-      createdAt: '2023-03-22T13:15:00Z'
-    },
-    {
-      _id: '5',
-      name: 'Mike Johnson',
-      email: 'mike.johnson@example.com',
-      phone: '+1 (555) 789-0123',
-      providerInfo: {
-        isApproved: false,
-        services: [
-          { name: 'Painting' },
-          { name: 'Wallpaper Removal' }
-        ]
-      },
-      createdAt: '2023-06-01T09:45:00Z'
-    }
-  ]);
-  
-  const [loading, setLoading] = useState(false); // Remove loading simulation
+  const [providers, setProviders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [approvalFilter, setApprovalFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Remove the useEffect that simulates API calls
-  // useEffect(() => {
-  //   const fetchProviders = async () => {
-  //     setLoading(true);
-  //     // Simulate API delay
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
-  //     setLoading(false);
-  //   };
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        setLoading(true);
+        const response = await adminAPI.getProviders({
+          page: currentPage,
+          limit: 10,
+          search: searchTerm,
+          approved: approvalFilter
+        });
+        
+        setProviders(response.data || []);
+        setTotalPages(response.totalPages || 1);
+      } catch (err) {
+        console.error('Error fetching providers:', err);
+        setError('Failed to load providers');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   fetchProviders();
-  // }, [currentPage, approvalFilter]);
+    fetchProviders();
+  }, [currentPage, searchTerm, approvalFilter]);
 
   const handleApprovalChange = async (providerId, isApproved) => {
-    // Update provider approval status in the local state
-    setProviders(providers.map(provider => 
-      provider._id === providerId 
-        ? {...provider, providerInfo: {...provider.providerInfo, isApproved}} 
-        : provider
-    ));
+    try {
+      await adminAPI.approveProvider(providerId, isApproved);
+      // Update provider approval status in the local state
+      setProviders(providers.map(provider => 
+        provider._id === providerId 
+          ? {...provider, providerInfo: {...provider.providerInfo, isApproved}} 
+          : provider
+      ));
+    } catch (err) {
+      console.error('Error updating provider approval status:', err);
+      setError('Failed to update provider approval status');
+    }
   };
 
   const filteredProviders = providers.filter(provider => 
-    provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    provider.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (provider.name && provider.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (provider.email && provider.email.toLowerCase().includes(searchTerm.toLowerCase()))
   ).filter(provider => 
     approvalFilter !== '' ? provider.providerInfo?.isApproved.toString() === approvalFilter : true
   );
@@ -115,17 +63,28 @@ const ProvidersManagement = () => {
     }
   };
 
-  // Remove the loading check
-  // if (loading) {
-  //   return (
-  //     <div className="admin-page">
-  //       <h1 className="dashboard-title">Providers Management</h1>
-  //       <div className="loading-container">
-  //         <div className="spinner"></div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <h1 className="dashboard-title">Providers Management</h1>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading providers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-page">
+        <h1 className="dashboard-title">Providers Management</h1>
+        <div className="error-container">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page">
@@ -198,11 +157,11 @@ const ProvidersManagement = () => {
                     <div className="user-info">
                       <div className="user-avatar-small">
                         <div className="avatar-small">
-                          {provider.name.charAt(0).toUpperCase()}
+                          {provider.name ? provider.name.charAt(0).toUpperCase() : 'P'}
                         </div>
                       </div>
                       <div className="user-name">
-                        {provider.name}
+                        {provider.name || 'Unknown'}
                       </div>
                     </div>
                   </td>
@@ -212,7 +171,7 @@ const ProvidersManagement = () => {
                     </div>
                   </td>
                   <td>
-                    {provider.email}
+                    {provider.email || 'N/A'}
                   </td>
                   <td>
                     {provider.phone || 'N/A'}
@@ -223,7 +182,7 @@ const ProvidersManagement = () => {
                     </span>
                   </td>
                   <td>
-                    {new Date(provider.createdAt).toLocaleDateString()}
+                    {provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : 'N/A'}
                   </td>
                   <td>
                     {!provider.providerInfo?.isApproved ? (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// Removed adminAPI import since we're using dummy data
+import { adminAPI } from '../../api/adminAPI';
 import {
   BarChart,
   Bar,
@@ -17,53 +17,84 @@ import '../../components/admin/AdminLayout.css'; // Corrected import path
 
 const ReportsAnalytics = () => {
   const [reports, setReports] = useState({
-    usersByRole: [
-      { _id: 'customer', count: 1242 },
-      { _id: 'provider', count: 87 },
-      { _id: 'admin', count: 3 }
-    ],
-    totalServices: 15,
-    bookingStats: [
-      { _id: 'pending', count: 24, totalRevenue: 1250.75 },
-      { _id: 'accepted', count: 42, totalRevenue: 3120.50 },
-      { _id: 'completed', count: 290, totalRevenue: 28750.25 },
-      { _id: 'cancelled', count: 15, totalRevenue: 0 },
-      { _id: 'rejected', count: 5, totalRevenue: 0 }
-    ],
-    revenueOverTime: [
-      { _id: '2023-06-01', dailyRevenue: 1250.75, bookingsCount: 12 },
-      { _id: '2023-06-02', dailyRevenue: 980.50, bookingsCount: 8 },
-      { _id: '2023-06-03', dailyRevenue: 1750.25, bookingsCount: 15 },
-      { _id: '2023-06-04', dailyRevenue: 2100.00, bookingsCount: 18 },
-      { _id: '2023-06-05', dailyRevenue: 1850.75, bookingsCount: 16 },
-      { _id: '2023-06-06', dailyRevenue: 2300.50, bookingsCount: 20 },
-      { _id: '2023-06-07', dailyRevenue: 1950.25, bookingsCount: 17 }
-    ]
+    usersByRole: [],
+    totalServices: 0,
+    bookingStats: [],
+    revenueOverTime: []
   });
   
-  const [loading, setLoading] = useState(false); // Remove loading simulation
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [period, setPeriod] = useState('month');
-  const [revenueData, setRevenueData] = useState([
-    { date: '2023-06-01', revenue: 1250.75, bookings: 12 },
-    { date: '2023-06-02', revenue: 980.50, bookings: 8 },
-    { date: '2023-06-03', revenue: 1750.25, bookings: 15 },
-    { date: '2023-06-04', revenue: 2100.00, bookings: 18 },
-    { date: '2023-06-05', revenue: 1850.75, bookings: 16 },
-    { date: '2023-06-06', revenue: 2300.50, bookings: 20 },
-    { date: '2023-06-07', revenue: 1950.25, bookings: 17 }
-  ]);
+  const [revenueData, setRevenueData] = useState([]);
 
-  // Remove the useEffect that simulates API calls
-  // useEffect(() => {
-  //   const fetchReports = async () => {
-  //     setLoading(true);
-  //     // Simulate API delay
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
-  //     setLoading(false);
-  //   };
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        // In a real implementation, you would have specific API endpoints for reports
+        // For now, we'll simulate with the existing endpoints
+        
+        // Fetch users for user distribution
+        const usersResponse = await adminAPI.getUsers();
+        
+        // Process user data for pie chart
+        const usersByRole = usersResponse.data?.reduce((acc, user) => {
+          const role = user.role || 'customer';
+          acc[role] = (acc[role] || 0) + 1;
+          return acc;
+        }, {});
+        
+        const usersByRoleArray = Object.entries(usersByRole).map(([role, count]) => ({
+          _id: role,
+          count
+        }));
+        
+        // For simplicity, we'll keep the other data as dummy data
+        // In a real implementation, you would fetch this from specific report endpoints
+        const bookingStats = [
+          { _id: 'pending', count: 24, totalRevenue: 1250.75 },
+          { _id: 'accepted', count: 42, totalRevenue: 3120.50 },
+          { _id: 'completed', count: 290, totalRevenue: 28750.25 },
+          { _id: 'cancelled', count: 15, totalRevenue: 0 },
+          { _id: 'rejected', count: 5, totalRevenue: 0 }
+        ];
+        
+        const revenueOverTime = [
+          { _id: '2023-06-01', dailyRevenue: 1250.75, bookingsCount: 12 },
+          { _id: '2023-06-02', dailyRevenue: 980.50, bookingsCount: 8 },
+          { _id: '2023-06-03', dailyRevenue: 1750.25, bookingsCount: 15 },
+          { _id: '2023-06-04', dailyRevenue: 2100.00, bookingsCount: 18 },
+          { _id: '2023-06-05', dailyRevenue: 1850.75, bookingsCount: 16 },
+          { _id: '2023-06-06', dailyRevenue: 2300.50, bookingsCount: 20 },
+          { _id: '2023-06-07', dailyRevenue: 1950.25, bookingsCount: 17 }
+        ];
+        
+        setReports({
+          usersByRole: usersByRoleArray,
+          totalServices: 15, // This would come from a services API in a real implementation
+          bookingStats,
+          revenueOverTime
+        });
+        
+        // Format revenue data for the chart
+        const formattedRevenueData = revenueOverTime.map(item => ({
+          date: item._id,
+          revenue: item.dailyRevenue,
+          bookings: item.bookingsCount
+        }));
+        
+        setRevenueData(formattedRevenueData);
+      } catch (err) {
+        console.error('Error fetching reports:', err);
+        setError('Failed to load reports');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   fetchReports();
-  // }, [period]);
+    fetchReports();
+  }, [period]);
 
   // Format user data for pie chart
   const userData = reports.usersByRole.map(item => ({
@@ -80,17 +111,28 @@ const ReportsAnalytics = () => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-  // Remove the loading check
-  // if (loading) {
-  //   return (
-  //     <div className="admin-page">
-  //       <h1 className="dashboard-title">Reports & Analytics</h1>
-  //       <div className="loading-container">
-  //         <div className="spinner"></div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <h1 className="dashboard-title">Reports & Analytics</h1>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-page">
+        <h1 className="dashboard-title">Reports & Analytics</h1>
+        <div className="error-container">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page">
