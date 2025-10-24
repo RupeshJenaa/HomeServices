@@ -8,11 +8,27 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/servicebooking', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      heartbeatFrequencyMS: 1000, // Check connection every second
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      family: 4 // Use IPv4, skip trying IPv6
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+
+    // Add reconnection handling
+    mongoose.connection.on('disconnected', () => {
+      console.log('Lost MongoDB connection... Retrying...');
+      setTimeout(() => {
+        connectDB();
+      }, 5000); // Retry after 5 seconds
+    });
+
   } catch (error) {
     console.error('Database connection error:', error);
-    process.exit(1);
+    // Don't exit the process, try to reconnect instead
+    setTimeout(() => {
+      connectDB();
+    }, 5000); // Retry after 5 seconds
   }
 };
 

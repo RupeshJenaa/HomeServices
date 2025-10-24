@@ -21,7 +21,10 @@ connectDB();
 initAdminUser(); // Add this line
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -33,10 +36,16 @@ app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ message: 'Server is running!' });
+  console.log('Health check requested from:', req.headers.origin);
+  console.log('Request headers:', req.headers);
+  res.status(200).json({ 
+    message: 'Server is running!',
+    timestamp: new Date(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

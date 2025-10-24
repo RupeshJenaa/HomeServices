@@ -4,6 +4,9 @@ import Service from '../models/Service.js';
 
 export const getUsers = async (req, res) => {
   try {
+    console.log('Getting users with query:', req.query);
+    console.log('User making request:', req.user);
+    
     const { role, page = 1, limit = 10 } = req.query;
     let filter = {};
 
@@ -11,12 +14,16 @@ export const getUsers = async (req, res) => {
       filter.role = role;
     }
 
+    console.log('Applying filter:', filter);
+
     const users = await User.find(filter)
       .select('-password')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    console.log('Found users:', users.length);
+    
     const total = await User.countDocuments(filter);
 
     res.status(200).json({

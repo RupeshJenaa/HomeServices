@@ -1,9 +1,10 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { logout } = useAuth();
 
   const navigation = [
@@ -58,8 +59,21 @@ const AdminSidebar = () => {
         </nav>
         <div className="admin-sidebar-footer">
           <button
-            onClick={logout}
-            className="admin-nav-item"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+            className="admin-nav-item logout-btn"
+            style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              color: '#ef4444',
+              width: '100%',
+              textAlign: 'left',
+              border: 'none',
+              cursor: 'pointer',
+              borderRadius: '0.5rem',
+              margin: '0'
+            }}
           >
             <svg className="admin-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

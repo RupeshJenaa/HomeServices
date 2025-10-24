@@ -1,59 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../../api/adminAPI';
+import { useAuth } from '../../context/AuthContext';
+import '../../components/admin/AdminLayout.css';
 import './Dashboard.css';
-import '../../components/admin/AdminLayout.css'; // Import admin layout styles for consistency
 
-const AdminDashboard = () => {
+const Dashboard = () => {
+  const { user, isAuthenticated } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalProviders: 0,
     totalBookings: 0,
     pendingApprovals: 0,
   });
-  
-  const [recentBookings, setRecentBookings] = useState([]);
-  const [recentUsers, setRecentUsers] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [recentUsers, setRecentUsers] = useState([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // In a real implementation, you would have an API endpoint for dashboard stats
-        // For now, we'll fetch individual data and calculate stats
+        setError(null);
+
+        console.log('Fetching dashboard data...');
+
+        // Fetch users data
+        const usersResponse = await adminAPI.getUsers({ limit: 5 });
+        console.log('Users Response:', usersResponse);
         
-        // Fetch users, providers, and bookings
-        const usersResponse = await adminAPI.getUsers();
         const providersResponse = await adminAPI.getProviders();
-        const bookingsResponse = await adminAPI.getBookings();
+        console.log('Providers Response:', providersResponse);
         
-        // Calculate stats
-        const totalUsers = usersResponse.data?.length || 0;
-        const totalProviders = providersResponse.data?.length || 0;
-        const totalBookings = bookingsResponse.data?.length || 0;
+        const bookingsResponse = await adminAPI.getBookings({ limit: 5 });
+        console.log('Bookings Response:', bookingsResponse);
         
-        // Filter pending approvals (this is a simplified example)
-        const pendingApprovals = providersResponse.data?.filter(provider => 
-          provider.status === 'pending'
-        ).length || 0;
-        
+        const reportsResponse = await adminAPI.getReports({ period: 'month' });
+        console.log('Reports Response:', reportsResponse);
+
+        // Update stats
         setStats({
-          totalUsers,
-          totalProviders,
-          totalBookings,
-          pendingApprovals
+          totalUsers: usersResponse?.pagination?.totalUsers || 0,
+          totalProviders: providersResponse?.pagination?.totalProviders || 0,
+          totalBookings: bookingsResponse?.pagination?.totalBookings || 0,
+          pendingApprovals: (providersResponse?.data || []).filter(p => !p.providerInfo?.isApproved).length
         });
-        
-        // Set recent bookings (limit to 5)
-        setRecentBookings(bookingsResponse.data?.slice(0, 5) || []);
-        
-        // Set recent users (limit to 4)
-        setRecentUsers(usersResponse.data?.slice(0, 4) || []);
+
+        // Update recent bookings
+        if (bookingsResponse?.data) {
+          setRecentBookings(bookingsResponse.data.map(booking => ({
+            id: booking._id,
+            customer: booking.customer?.name || 'Unknown Customer',
+            provider: booking.provider?.name || 'Unknown Provider',
+            service: booking.service?.name || 'Unknown Service',
+            amount: booking.totalAmount || 0,
+            status: booking.status || 'pending',
+            date: booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'Unknown Date'
+          })));
+        }
+
+        // Update recent users
+        if (usersResponse?.data) {
+          setRecentUsers(usersResponse.data.map(user => ({
+            id: user._id,
+            name: user.name || 'Unknown User',
+            email: user.email || 'No Email',
+            role: user.role || 'user',
+            joinDate: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown Date',
+            status: user.status || 'active'
+          })));
+        }
+
+        // Debug output
+        console.log('Users Response:', usersResponse);
+        console.log('Providers Response:', providersResponse);
+        console.log('Bookings Response:', bookingsResponse);
+
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
+        setError('Failed to load dashboard data. Please try again later.');
         setLoading(false);
       }
     };
@@ -66,38 +94,15 @@ const AdminDashboard = () => {
       case 'pending':
         return 'status-badge pending';
       case 'accepted':
-        return 'status-badge active';
+        return 'status-badge accepted';
       case 'completed':
-        return 'status-badge active';
+        return 'status-badge completed';
       case 'cancelled':
-        return 'status-badge inactive';
+        return 'status-badge cancelled';
       default:
         return 'status-badge default';
     }
   };
-
-  if (loading) {
-    return (
-      <div className="admin-dashboard">
-        <h1 className="dashboard-title">Admin Dashboard</h1>
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Loading dashboard data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="admin-dashboard">
-        <h1 className="dashboard-title">Admin Dashboard</h1>
-        <div className="error-container">
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="admin-dashboard">
@@ -108,7 +113,7 @@ const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-card-content">
             <div className="stat-card-header">
-              <div className="stat-card-icon bg-blue-500">
+              <div className="stat-card-icon users">
                 <svg className="stat-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
@@ -124,7 +129,7 @@ const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-card-content">
             <div className="stat-card-header">
-              <div className="stat-card-icon bg-green-500">
+              <div className="stat-card-icon providers">
                 <svg className="stat-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -140,7 +145,7 @@ const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-card-content">
             <div className="stat-card-header">
-              <div className="stat-card-icon bg-yellow-500">
+              <div className="stat-card-icon bookings">
                 <svg className="stat-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -156,7 +161,7 @@ const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-card-content">
             <div className="stat-card-header">
-              <div className="stat-card-icon bg-red-500">
+              <div className="stat-card-icon approvals">
                 <svg className="stat-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
@@ -174,19 +179,19 @@ const AdminDashboard = () => {
       <div className="quick-actions">
         <h2 className="quick-actions-title">Quick Actions</h2>
         <div className="quick-actions-grid">
-          <button className="quick-action-button btn-blue">
+          <button className="quick-action-button users">
             <svg className="quick-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             Manage Users
           </button>
-          <button className="quick-action-button btn-green">
+          <button className="quick-action-button providers">
             <svg className="quick-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
             Approve Providers
           </button>
-          <button className="quick-action-button btn-purple">
+          <button className="quick-action-button reports">
             <svg className="quick-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -214,18 +219,18 @@ const AdminDashboard = () => {
               </thead>
               <tbody>
                 {recentBookings.map((booking) => (
-                  <tr key={booking._id}>
-                    <td>{booking._id}</td>
-                    <td>{booking.customer?.name || 'N/A'}</td>
-                    <td>{booking.provider?.name || 'N/A'}</td>
-                    <td>{booking.service?.name || 'N/A'}</td>
-                    <td>${booking.totalAmount?.toFixed(2) || '0.00'}</td>
+                  <tr key={booking.id}>
+                    <td>{booking.id}</td>
+                    <td>{booking.customer}</td>
+                    <td>{booking.provider}</td>
+                    <td>{booking.service}</td>
+                    <td>${booking.amount.toFixed(2)}</td>
                     <td>
                       <span className={getStatusBadgeClass(booking.status)}>
                         {booking.status}
                       </span>
                     </td>
-                    <td>{new Date(booking.createdAt).toLocaleDateString()}</td>
+                    <td>{booking.date}</td>
                   </tr>
                 ))}
               </tbody>
@@ -251,29 +256,29 @@ const AdminDashboard = () => {
               </thead>
               <tbody>
                 {recentUsers.map((user) => (
-                  <tr key={user._id}>
+                  <tr key={user.id}>
                     <td>
                       <div className="user-info">
                         <div className="user-avatar-small">
                           <div className="avatar-small">
-                            {user.name?.charAt(0) || 'U'}
+                            {user.name.charAt(0)}
                           </div>
                         </div>
                         <div className="user-name">
-                          {user.name || 'Unknown'}
+                          {user.name}
                         </div>
                       </div>
                     </td>
-                    <td>{user.email || 'N/A'}</td>
+                    <td>{user.email}</td>
                     <td>
-                      <span className={`role-badge ${user.role || 'customer'}`}>
-                        {user.role || 'customer'}
+                      <span className={`role-badge ${user.role}`}>
+                        {user.role}
                       </span>
                     </td>
-                    <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</td>
+                    <td>{user.joinDate}</td>
                     <td>
-                      <span className={`status-badge ${user.isActive ? 'active' : 'pending'}`}>
-                        {user.isActive ? 'Active' : 'Inactive'}
+                      <span className={`status-badge ${user.status}`}>
+                        {user.status}
                       </span>
                     </td>
                   </tr>
@@ -287,4 +292,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;

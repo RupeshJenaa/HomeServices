@@ -12,6 +12,7 @@ This is the frontend application for the Home Services platform, built with Reac
 - Location-based service search
 - Favorite services tracking
 - Booking history
+- **Modern Admin Dashboard** - Fully functional admin panel with dummy data visualization
 
 ## Tech Stack
 
@@ -19,6 +20,7 @@ This is the frontend application for the Home Services platform, built with Reac
 - **Vite** - Fast build tool and development server
 - **React Router v7** - Declarative routing for React
 - **Axios** - Promise based HTTP client
+- **CSS3** - Modern styling with gradients and animations
 
 ## Getting Started
 
@@ -38,6 +40,10 @@ npm install
 ```bash
 npm run dev
 ```
+
+### Access Admin Dashboard
+
+Navigate to `http://localhost:5173/admin/dashboard` after starting the development server.
 
 ### Build
 

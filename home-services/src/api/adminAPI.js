@@ -1,28 +1,58 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = '/api';
 
-const api = axios.create({
+// Create a shared axios instance
+export const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true
 });
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log(`API Response [${response.config.url}]:`, response.data);
+    return response;
+  },
+  (error) => {
+    console.error(`API Error [${error.config?.url}]:`, {
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Add token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.warn('No token found in localStorage');
   }
   return config;
+}, (error) => {
+  console.error('Request interceptor error:', error);
+  return Promise.reject(error);
 });
 
 export const adminAPI = {
   // User management
   getUsers: async (params = {}) => {
-    const response = await api.get('/admin/users', { params });
-    return response.data;
+    try {
+      console.log('Fetching users with params:', params);
+      const response = await api.get('/admin/users', { params });
+      console.log('Users API response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching users:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
   updateUserStatus: async (userId, isActive) => {

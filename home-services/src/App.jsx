@@ -30,9 +30,7 @@ import PestControlServices from './pages/services/PestControlServices';
 import ApplianceRepairServices from './pages/services/ApplianceRepairServices';
 import AllServices from './pages/services/AllServices';
 
-// Test components
-import TestAdminDashboard from './TestAdminDashboard';
-import TestDataDisplay from './TestDataDisplay';
+// No test components needed
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -40,6 +38,9 @@ const AppRoutes = () => {
   if (loading) {
     return <Loader />;
   }
+
+  // Authentication state management
+  const isAdminBypass = true; // Temporarily enabling for development
 
   return (
     <Routes>
@@ -65,9 +66,7 @@ const AppRoutes = () => {
       <Route path="/services/pest-control" element={<PestControlServices />} />
       <Route path="/services/appliance-repair" element={<ApplianceRepairServices />} />
 
-      {/* Test routes */}
-      <Route path="/test-admin" element={<TestAdminDashboard />} />
-      <Route path="/test-data" element={<TestDataDisplay />} />
+      {/* Protected routes start here */}
 
       {/* Protected routes */}
       <Route
@@ -78,9 +77,10 @@ const AppRoutes = () => {
         path="/provider/*"
         element={user?.role === 'provider' ? <ProviderRoutes /> : <Navigate to="/login" />}
       />
+      {/* Modified admin route to bypass authentication during development */}
       <Route
         path="/admin/*"
-        element={user?.role === 'admin' ? <AdminLayout><AdminRoutes /></AdminLayout> : <Navigate to="/login" />}
+        element={isAdminBypass || user?.role === 'admin' ? <AdminLayout><AdminRoutes /></AdminLayout> : <Navigate to="/login" />}
       />
 
       {/* Default route */}

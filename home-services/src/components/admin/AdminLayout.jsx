@@ -26,7 +26,9 @@ const AdminLayout = () => {
           </div>
         </header>
         <main className="admin-content">
-          <Outlet />
+          <div className="admin-page">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

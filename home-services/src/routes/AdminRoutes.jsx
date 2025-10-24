@@ -9,11 +9,12 @@ import ReportsAnalytics from '../pages/admin/ReportsAnalytics';
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="dashboard" element={<Dashboard />} />
-      <Route path="users" element={<UsersManagement />} />
-      <Route path="providers" element={<ProvidersManagement />} />
-      <Route path="bookings" element={<BookingsManagement />} />
-      <Route path="reports" element={<ReportsAnalytics />} />
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/users" element={<UsersManagement />} />
+      <Route path="/providers" element={<ProvidersManagement />} />
+      <Route path="/bookings" element={<BookingsManagement />} />
+      <Route path="/reports" element={<ReportsAnalytics />} />
     </Routes>
   );
 };
