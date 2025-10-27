@@ -77,11 +77,13 @@ const AppRoutes = () => {
         path="/provider/*"
         element={user?.role === 'provider' ? <ProviderRoutes /> : <Navigate to="/login" />}
       />
-      {/* Modified admin route to bypass authentication during development */}
+      {/* Admin route: render AdminLayout and nest AdminRoutes so AdminLayout's Outlet renders them */}
       <Route
         path="/admin/*"
-        element={isAdminBypass || user?.role === 'admin' ? <AdminLayout><AdminRoutes /></AdminLayout> : <Navigate to="/login" />}
-      />
+        element={isAdminBypass || user?.role === 'admin' ? <AdminLayout /> : <Navigate to="/login" />}
+      >
+        {AdminRoutes}
+      </Route>
 
       {/* Default route */}
       <Route
